@@ -27,55 +27,152 @@ x<-t(leukemia_big)
 
 library(factoextra)
 
-# Using the euclidean distance and set scal 
-res.dist <- get_dist(x, stand = TRUE, method = "manhattan")
+# Using the euclidean distance and set scale true 
+re_dist <- get_dist(x, stand = TRUE, method = "manhattan")
 
-fviz_dist(res.dist, order = TRUE,
+fviz_dist(re_dist, order = TRUE,
           gradient = list(low = "red", mid = "white", high = "blue"))
-
-
 
 
 ##### Hiearchical clustering
 
 
-#  Using this algorithm you can see the relationship of individual data points and relationships of clusters.
+#This algorithm is used to find the relationship of individual data points and relationships of clusters.
 
-d=dist(x)
-hc=hclust(d,method="complete")
+d<-dist(x)
+hc<-hclust(d,method="complete")
+hc_single <-hclust(d,method = "single")
+hc_ward.D2 <-hclust(d,method = "ward.D2")
+hc_ward.D<-hclust(d,method = "ward.D")
+hc_average <-hclust(d,method = "average")
+par(mfrow=c(3,2))
+plot(hc_average)
+plot(hc_single)
+plot(hc_ward.D)
+plot(hc_ward.D2)
 plot(hc)
+
+#Let's try to identify what is the best level to cut the dendrogram by looking 
+#for the highest separation between clusters. 
+
+# complet linkage
+m <- length(hc$height)
+s <- c()
+for (j in m:2) s <- c(s, hc$height[j]/hc$height[j - 1])
+
+k = (2:m)[s == max(s)]
+k2 <- (2:m)[s == max(s[-(k - 1)])]
+k3 <- (2:m)[s == max(s[-c(k - 1, k2 - 1)])]
+k4 <- (2:m)[s == max(s[-c(k - 1, k2 - 1, k3 - 1)])]
+k5 <- (2:m)[s == max(s[-c(k - 1, k2 - 1, k3 - 1, k4 - 1)])]
+
+clus<- data.frame( complet=c(k,k2,k3,k4,k5))
+
+row.names(clus) <- paste0('k',1:5)
+
+# single linkage
+
+m <- length(hc_single$height)
+s <- c()
+for (j in m:2) s <- c(s, hc_single$height[j]/hc_single$height[j - 1])
+
+k = (2:m)[s == max(s)]
+k2 <- (2:m)[s == max(s[-(k - 1)])]
+k3 <- (2:m)[s == max(s[-c(k - 1, k2 - 1)])]
+k4 <- (2:m)[s == max(s[-c(k - 1, k2 - 1, k3 - 1)])]
+k5 <- (2:m)[s == max(s[-c(k - 1, k2 - 1, k3 - 1, k4 - 1)])]
+
+clus<- cbind(clus,single=c(k,k2,k3,k4,k5))
+
+
+# ward.D2 linkage
+
+m <- length(hc_ward.D2$height)
+s <- c()
+for (j in m:2) s <- c(s, hc_ward.D2$height[j]/hc_ward.D2$height[j - 1])
+
+k = (2:m)[s == max(s)]
+k2 <- (2:m)[s == max(s[-(k - 1)])]
+k3 <- (2:m)[s == max(s[-c(k - 1, k2 - 1)])]
+k4 <- (2:m)[s == max(s[-c(k - 1, k2 - 1, k3 - 1)])]
+k5 <- (2:m)[s == max(s[-c(k - 1, k2 - 1, k3 - 1, k4 - 1)])]
+
+clus<- cbind(clus,ward_D2=c(k,k2,k3,k4,k5))
+
+
+# ward.D linkage 
+
+m <- length(hc_ward.D$height)
+s <- c()
+for (j in m:2) s <- c(s, hc_ward.D$height[j]/hc_ward.D$height[j - 1])
+
+k = (2:m)[s == max(s)]
+k2 <- (2:m)[s == max(s[-(k - 1)])]
+k3 <- (2:m)[s == max(s[-c(k - 1, k2 - 1)])]
+k4 <- (2:m)[s == max(s[-c(k - 1, k2 - 1, k3 - 1)])]
+k5 <- (2:m)[s == max(s[-c(k - 1, k2 - 1, k3 - 1, k4 - 1)])]
+
+clus<- cbind(clus,ward_D=c(k,k2,k3,k4,k5))
+
+# average linkage 
+
+m <- length(hc_average$height)
+s <- c()
+for (j in m:2) s <- c(s, hc_average$height[j]/hc_average$height[j - 1])
+
+k = (2:m)[s == max(s)]
+k2 <- (2:m)[s == max(s[-(k - 1)])]
+k3 <- (2:m)[s == max(s[-c(k - 1, k2 - 1)])]
+k4 <- (2:m)[s == max(s[-c(k - 1, k2 - 1, k3 - 1)])]
+k5 <- (2:m)[s == max(s[-c(k - 1, k2 - 1, k3 - 1, k4 - 1)])]
+
+clus<- cbind(clus,average=c(k,k2,k3,k4,k5))
+print(clus)
+
+
+#Now you will append the cluster results obtained back in the original dataframe
+gvhdTib <- mutate(data.frame(t(leukemia_big)), hclustCluster = as.factor(gvhdCut))
+'ggpairs(gvhdTib, aes(col = hclustCluster),
+        upper = list(continuous = "density"),
+        lower = list(continuous = wrap("points", size = 0.5))) +
+  theme_bw()'
 # Hierarchical clustering on x dataset
-fviz_dend(hclust(dist(x)), k = 3, k_colors = "jco", as.ggplot = TRUE, show_labels = T,
+par(mfrow=c(3,2))
+plot(hc_average)
+plot(hc_single)
+plot(hc_ward.D)
+plot(hc)
+#Where to cut the tree ? k=2 from the table clus
+fviz_dend(hc_ward.D2, k = 2, k_colors = "jco", as.ggplot = TRUE, show_labels = T,
+          cex = 0.525)
+fviz_dend(hc_ward.D, k = 2, k_colors = "jco", as.ggplot = TRUE, show_labels = T,
+          cex = 0.525)
+fviz_dend(hc, k = 2, k_colors = "jco", as.ggplot = TRUE, show_labels = T,
           cex = 0.525)
 
+par(mfrow=c(1,1))
 
+
+## Heatmap
 library(pheatmap)
-
-
-pheatmap(x,show_rownames=T,show_colnames=FALSE,
-         scale = "none",clustering_method="ward.D2",
-         clustering_distance_cols="euclidean")
-
-annotation_col<- data.frame(LeukemiaType =n)
-
-row.names(annotation_col) <- colnames(leukemia_big)
-
-#annotation_col<-data.matrix(LeukemiaType=n,rownames.force=colnames(leukemia_big))
-
 
 
 pheatmap(x,show_rownames=F,show_colnames=FALSE,
          scale = "none",clustering_method="ward.D2",
          clustering_distance_cols="euclidean")
 
+'annotation_col<- data.frame(LeukemiaType =n)
 
-#Where to cut the tree ?
+row.names(annotation_col) <- colnames(leukemia_big)
+'
+#annotation_col<-data.matrix(LeukemiaType=n,rownames.force=colnames(leukemia_big))
 
-set.seed(123567)
-# Hierarchical clustering on x dataset
-fviz_dend(hclust(dist(x)), k = 3, k_colors = "jco", as.ggplot = TRUE, show_labels = T,
-                 cex = 0.525)
+
+
+
 # K-means on x dataset
+# here we start with the number cluster identify on Ordered Dissimilarity Matrix
+set.seed(125348897)
 kclu <- kmeans(x, 3)
 fviz_cluster(list(data = x, cluster = kclu$cluster), ellipse.type = "norm", geom = "point",
              stand = FALSE, palette = "jco", ggtheme = theme_classic())
@@ -90,7 +187,9 @@ type2kclu = data.frame(
 
 table(type2kclu)
 
-#k-medoids
+
+
+###k-medoids
 
 kmclu=cluster::pam(x,k=3) #  cluster using k-medoids
 
@@ -135,10 +234,8 @@ plot(2:7,Ks,xlab="k",ylab="av. silhouette",type="b",
 
 
 #t seems the best value for  k is 2
-fviz_dend(hclust(dist(x)), k = 3, k_colors = "jco", as.ggplot = TRUE, show_labels = T,
-          cex = 0.525)
 
-library(cluster)
+
 set.seed(101)
 # define the clustering function
 pam1 <- function(x,k) 
@@ -165,7 +262,7 @@ type2kclu = data.frame(
 table(type2kclu)
 
 
-# Dimentional reduction
+#### Dimentional reduction
 
 library(TeachingDemos)
 library(KernSmooth)
@@ -180,7 +277,7 @@ library(fpc)
 library(NbClust)
 pcdemo <- prcomp(x)
 pc <- pcdemo$x[, 1:2]
-plot(pc)
+
 fviz_eig(pcdemo)
 est <- bkde2D(pc, bandwidth = c(0.5, 0.5), gridsize = c(20, 20))
 
@@ -199,7 +296,7 @@ fviz_pca_ind(pcdemo,
              gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
              repel = TRUE     
 )
-annotation_col$LeukemiaType<-as.factor(annotation_col$LeukemiaType)
+
 fviz_pca_ind(pcdemo,
              col.ind = as.factor(n), # colorer par groupes
              palette = c("#00AFBB",  "#FC4E07"),
@@ -221,10 +318,18 @@ d=svd(scale(leukemia_big)) # apply SVD
 assays=t(d$u) %*% scale(leukemia_big) # projection on eigenassays
 plot(assays[1,],assays[2,],pch=19,
      col=as.factor(annotation_col$LeukemiaType))
-#plot(d$v[,1],d$v[,2],pch=19,
-#     col=annotation_col$LeukemiaType)
-pr=prcomp(x,center=TRUE,scale=TRUE) # apply PCA on transposed matrix
 
-# plot new coordinates from PCA, projections on eigenvectors
-# since the matrix is transposed eigenvectors represent 
-plot(pr$x[,1],pr$x[,2],col=as.factor(annotation_col$LeukemiaType))
+## kmeans on principal component 
+set.seed(1258)
+kc <- kmeans(pc, 2)
+plot(pc,col=factor(kc$cluster))
+
+fviz_cluster(list(data = pc, cluster = kc$cluster), ellipse.type = "norm", geom = "point",
+             stand = FALSE, palette = "jco", ggtheme = theme_classic())
+
+# number of data points in each cluster
+type2kclu = data.frame(
+  LeukemiaType =n,
+  cluster=kc$cluster)
+
+table(type2kclu)
