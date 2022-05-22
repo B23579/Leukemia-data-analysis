@@ -8,5 +8,8 @@ Researchers in genomics are frequently interested in understanding how their sam
 The clustering techniques(k-means, k-medoids, and hierarchical clustering) will be applied to find groups of patients that are more similar to each other than the rest of the patients using the distance or similarity metric between patients’ expression profiles. 
 
 The dimension reduction technique (PCA, SVD) will be applied to  reduce the number of genes expression or variables to obtain  a few principal highly variables that capture most of the variations inside the data instead of thousands. This is useful for clustering, predictive modeling and 2D or 3D visualization of many genes expression.
+
+# Data description
+The leukemia dataset consists of gene expression profiles for 72 patients, 47 of who suffer from ALL and $57$ from AML leukemia type. This data comes from the landmark Science paper authored by [Golub and colleagues in 1999](https://hastie.su.domains/CASI_files/DATA/leukemia.html). It contains 7128 genes with no missing data.
 ## PCA
 ![fg](./PCA.png) 
