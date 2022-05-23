@@ -1,4 +1,5 @@
 library(tidyverse)
+library(caret)
 leukemia_big <- read.csv("http://hastie.su.domains/CASI_files/DATA/leukemia_big.csv")
 
 n<-names(leukemia_big)
@@ -30,11 +31,14 @@ library(factoextra)
 # Using the euclidean distance and set scale true 
 re_dist <- get_dist(x, stand = TRUE, method = "manhattan")
 
-fviz_dist(re_dist, order = TRUE,
+p<-fviz_dist(re_dist, order = TRUE,
           gradient = list(low = "red", mid = "white", high = "blue"))
 
+ggsave(p, filename = "ODM.png")
 
-##### Hiearchical clustering
+
+
+##### Hierarchical clustering
 
 
 #This algorithm is used to find the relationship of individual data points and relationships of clusters.
@@ -129,13 +133,6 @@ k5 <- (2:m)[s == max(s[-c(k - 1, k2 - 1, k3 - 1, k4 - 1)])]
 clus<- cbind(clus,average=c(k,k2,k3,k4,k5))
 print(clus)
 
-
-#Now you will append the cluster results obtained back in the original dataframe
-gvhdTib <- mutate(data.frame(t(leukemia_big)), hclustCluster = as.factor(gvhdCut))
-'ggpairs(gvhdTib, aes(col = hclustCluster),
-        upper = list(continuous = "density"),
-        lower = list(continuous = wrap("points", size = 0.5))) +
-  theme_bw()'
 # Hierarchical clustering on x dataset
 par(mfrow=c(3,2))
 plot(hc_average)
@@ -143,6 +140,7 @@ plot(hc_single)
 plot(hc_ward.D)
 plot(hc)
 #Where to cut the tree ? k=2 from the table clus
+par(mfrow=c(1,3))
 fviz_dend(hc_ward.D2, k = 2, k_colors = "jco", as.ggplot = TRUE, show_labels = T,
           cex = 0.525)
 fviz_dend(hc_ward.D, k = 2, k_colors = "jco", as.ggplot = TRUE, show_labels = T,
@@ -157,9 +155,11 @@ par(mfrow=c(1,1))
 library(pheatmap)
 
 
-pheatmap(x,show_rownames=F,show_colnames=FALSE,
+p<-pheatmap(x,show_rownames=F,show_colnames=FALSE,
          scale = "none",clustering_method="ward.D2",
-         clustering_distance_cols="euclidean")
+         clustering_distance_cols="euclidean",annotation_col = as.factor(n))
+
+ggsave(p, filename = "heatmap.png")
 
 'annotation_col<- data.frame(LeukemiaType =n)
 
@@ -172,7 +172,9 @@ row.names(annotation_col) <- colnames(leukemia_big)
 
 # K-means on x dataset
 # here we start with the number cluster identify on Ordered Dissimilarity Matrix
+
 set.seed(125348897)
+
 kclu <- kmeans(x, 3)
 fviz_cluster(list(data = x, cluster = kclu$cluster), ellipse.type = "norm", geom = "point",
              stand = FALSE, palette = "jco", ggtheme = theme_classic())
@@ -181,17 +183,17 @@ fviz_cluster(list(data = x, cluster = kclu$cluster), ellipse.type = "norm", geom
 table(kclu$cluster)
 
 
-type2kclu = data.frame(
+type2kclu <- data.frame(
   LeukemiaType =n,
   cluster=kclu$cluster)
 
 table(type2kclu)
 
-
+confusionMatrix(as.factor(n), as.factor(type2kclu$LeukemiaType))
 
 ###k-medoids
 
-kmclu=cluster::pam(x,k=3) #  cluster using k-medoids
+kmclu<-cluster::pam(x,k=3) #  cluster using k-medoids
 
 # make a data frame with Leukemia type and cluster id
 type2kmclu = data.frame(
@@ -199,13 +201,14 @@ type2kmclu = data.frame(
   cluster=kmclu$cluster)
 
 table(type2kmclu)
-
+confusionMatrix(as.factor(n), as.factor(type2kclu$LeukemiaType))
 
 # Calculate distances
 dists=dist(x)
 
 # calculate MDS
 mds=cmdscale(dists)
+par(mfrow=c(1,2))
 
 # plot the patients in the 2D space
 plot(mds,pch=19,col=rainbow(5)[kclu$cluster])
@@ -223,18 +226,17 @@ legend("bottomright",
 library(cluster)
 set.seed(101)
 pamclu=cluster::pam(x,k=3)
-plot(silhouette(pamclu),main=NULL)
-
-
 Ks=sapply(2:7,
           function(i) 
             summary(silhouette(pam(x,k=i)))$avg.width)
 plot(2:7,Ks,xlab="k",ylab="av. silhouette",type="b",
      pch=19)
+par(mfrow=c(1,1))
+plot(silhouette(pamclu),main=NULL)
 
+par(mfrow=c(1,1))
 
-#t seems the best value for  k is 2
-
+#it seems the best value for  k is 2
 
 set.seed(101)
 # define the clustering function
@@ -243,16 +245,24 @@ pam1 <- function(x,k)
 
 # calculate the gap statistic
 pam.gap= clusGap(x, FUN = pam1, K.max = 8,B=50)
+par(mfrow=c(1,1))
+# plot the gap statistic across k values
+p<-plot(pam.gap, main = "Gap statistic for the 'Leukemia' data")
+ggsave(p, filename = "gap.png")
 
-# plot the gap statistic accross k values
-plot(pam.gap, main = "Gap statistic for the 'Leukemia' data")
+#Elbow
+fviz_nbclust(x, kmeans, method = "wss") +
+  geom_vline(xintercept = 3, linetype = 2)+
+  labs(subtitle = "Elbow method")
 
-### kmeans with 2 cluster
+### k-means with 2 cluster
 
 # K-means on x dataset
+set.seed(125348897)
 kclu <- kmeans(x, 2)
 fviz_cluster(list(data = x, cluster = kclu$cluster), ellipse.type = "norm", geom = "point",
              stand = FALSE, palette = "jco", ggtheme = theme_classic())
+
 
 # number of data points in each cluster
 type2kclu = data.frame(
@@ -262,9 +272,21 @@ type2kclu = data.frame(
 table(type2kclu)
 
 
+###k-medoids
+
+kmclu<-cluster::pam(x,k=2) #  cluster using k-medoids
+
+# make a data frame with Leukemia type and cluster id
+type2kmclu = data.frame(
+  LeukemiaType =n,
+  cluster=kmclu$cluster)
+
+table(type2kmclu)
+
+
+
 #### Dimentional reduction
 
-library(TeachingDemos)
 library(KernSmooth)
 library(MASS)
 library(lattice)
@@ -275,6 +297,7 @@ library(factoextra)
 library(cluster)
 library(fpc)
 library(NbClust)
+
 pcdemo <- prcomp(x)
 pc <- pcdemo$x[, 1:2]
 
@@ -307,17 +330,12 @@ fviz_pca_ind(pcdemo,
 )
 
 
-# calculate the PCA only for our genes and all the samples
-fviz_pca_biplot(pcdemo, repel = TRUE,
-                col.var = "#2E9FDF", 
-                col.ind = "#696969"  
-)
 
 par(mfrow=c(1,2))
 d=svd(scale(leukemia_big)) # apply SVD
-assays=t(d$u) %*% scale(leukemia_big) # projection on eigenassays
+assays=t(d$u) %*% scale(leukemia_big) # projection on eigenarray
 plot(assays[1,],assays[2,],pch=19,
-     col=as.factor(annotation_col$LeukemiaType))
+     col=as.factor(n))
 
 ## kmeans on principal component 
 set.seed(1258)
@@ -331,5 +349,7 @@ fviz_cluster(list(data = pc, cluster = kc$cluster), ellipse.type = "norm", geom 
 type2kclu = data.frame(
   LeukemiaType =n,
   cluster=kc$cluster)
-
+type2kclu
 table(type2kclu)
+confusionMatrix(as.factor(n), as.factor(type2kclu$LeukemiaType))
+
