@@ -11,5 +11,19 @@ The dimension reduction technique (PCA, SVD) will be applied to  reduce the numb
 
 # Data description
 The leukemia dataset consists of gene expression profiles for 72 patients, 47 of who suffer from ALL and $57$ from AML leukemia type. This data comes from the landmark Science paper authored by [Golub and colleagues in 1999](https://hastie.su.domains/CASI_files/DATA/leukemia.html). It contains 7128 genes with no missing data.
+
+
+## Experimental Procedure
+The following steps were considered: 
+
+* Ordered Dissimilarity Matrix (ODM) was used to assess clustering tendency in the dataset.
+
+ * We then used the density plot visualization of the bivariate distribution for the first principal components to have a clearer vision of any clustering distribution within the gene expression of the patients. SVD is applied to plot samples on the reduced dimensions to visualize a clear separation of samples. 
+
+* The hierarchical clustering was applied using complete, single, average, ward.D, and ward.D2 linkage to find the relationship between individual data points and clusters. We look at the highest separation between clusters to identify the appropriate level to cut the dendrogram. We obtain a collection of clusters at various levels of the dendrogram cutting point, and we utilize majority voting to choose the appropriate number of clusters.
+
+* The partition clustering approach (k-means and k-medoids) was employed to find hidden groups within the patients gene expression. The average silhouette value for various k values has been applied to determine the appropriate number of clusters. The validation of cluster consistency within data clusters was endorsed using the within-cluster variation method known as the gap statistic.
+
+## Result and Discussion 
 ## PCA
 ![fg](./PCA.png) 
