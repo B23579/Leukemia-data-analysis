@@ -25,5 +25,6 @@ The following steps were considered:
 * The partition clustering approach (k-means and k-medoids) was employed to find hidden groups within the patients gene expression. The average silhouette value for various k values has been applied to determine the appropriate number of clusters. The validation of cluster consistency within data clusters was endorsed using the within-cluster variation method known as the gap statistic.
 
 ## Result and Discussion 
+ in progress
 ## PCA
 ![fg](./PCA.png) 
